@@ -4,7 +4,7 @@ import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { s3Storage } from '@payloadcms/storage-s3'
 import path from 'path'
 import { buildConfig } from 'payload'
-import type { EmailAdapter, Plugin } from 'payload'
+import type { Plugin } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
@@ -33,7 +33,7 @@ const SERVER_URL = process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:30
  * (Payload writes outgoing mail to console). Required in prod for password
  * resets and admin invitations.
  */
-const email: EmailAdapter | undefined = process.env.SMTP_HOST
+const email = process.env.SMTP_HOST
   ? nodemailerAdapter({
       defaultFromAddress: process.env.SMTP_FROM_ADDRESS || 'no-reply@singleshot.pl',
       defaultFromName: process.env.SMTP_FROM_NAME || 'SingleShot',
