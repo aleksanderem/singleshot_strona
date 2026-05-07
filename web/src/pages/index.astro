@@ -1,0 +1,471 @@
+---
+import {
+  getHero,
+  getAbout,
+  getTrainings,
+  getPricing,
+  getPrinciples,
+  getOpinions,
+  getWireframe,
+  getGreenTactics,
+  getContact,
+  getSiteSettings,
+} from '@/lib/payload'
+import '@/styles/site.css'
+
+const [hero, about, trainings, pricing, principles, opinions, wireframe, green, contact, settings] =
+  await Promise.all([
+    getHero(),
+    getAbout(),
+    getTrainings(),
+    getPricing(),
+    getPrinciples(),
+    getOpinions(),
+    getWireframe(),
+    getGreenTactics(),
+    getContact(),
+    getSiteSettings(),
+  ])
+
+/**
+ * Wrap an accent substring inside `<em>` to match the visual treatment used
+ * across the original SingleShot.html (italic, accent-color highlight).
+ */
+function withAccent(text: string, accent?: string | null): string {
+  if (!accent || !text) return text
+  const idx = text.indexOf(accent)
+  if (idx === -1) return text
+  return text.slice(0, idx) + `<em>${accent}</em>` + text.slice(idx + accent.length)
+}
+
+/** URL for a Payload-uploaded video relation (or undefined). */
+function videoUrl(field: unknown): string | undefined {
+  if (!field || typeof field !== 'object') return undefined
+  const f = field as { url?: string | null }
+  return f.url ?? undefined
+}
+
+const scrollIntensity = settings.scrollIntensity ?? 7
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{settings.siteName ?? 'SingleShot'} — Szkolenia strzeleckie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Bebas+Neue&family=Archivo+Narrow:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    {/* Tweaks bootstrap — site.js reads window.TWEAKS at startup */}
+    <script is:inline define:vars={{ scrollIntensity }}>
+      window.TWEAKS = {
+        accent: 'brass',
+        fontPair: 'oswald-mono',
+        theme: 'dark',
+        scrollIntensity: scrollIntensity,
+      }
+    </script>
+  </head>
+  <body>
+    <!-- progress bar -->
+    <div class="scroll-bar" id="scrollBar"></div>
+
+    <!-- nav -->
+    <nav class="nav">
+      <a href="#hero" class="brand">
+        <img src="/logo.svg" alt={settings.siteName ?? 'SingleShot'} class="brand-logo" />
+      </a>
+      <ul>
+        {(settings.navigation ?? []).map((n, i) => <li><a href={n.href} data-pl={`site-settings:navigation.${i}.label`}>{n.label}</a></li>)}
+      </ul>
+      <a class="cta" href="#kontakt"><span data-pl="hero:ctaLabel">{hero.ctaLabel ?? 'Umów szkolenie'}</span> →</a>
+    </nav>
+
+    <!-- ============== HERO ============== -->
+    <section class="hero" id="hero" data-screen-label="01 Hero" data-crosshair="off">
+      <div class="hero-sticky">
+        <video
+          class="hero-video"
+          id="heroVideo"
+          src={videoUrl(hero.video) ?? '/videos/hero-bullet.mp4'}
+          muted
+          playsinline
+          preload="auto"
+          autoplay></video>
+        <div class="hero-vignette"></div>
+
+        <div class="hud hud-tl">
+          <span class="hud-row"><span class="k">SYS</span> <span class="v">SINGLESHOT · PL</span></span>
+          <span class="hud-row"><span class="k">LOC</span> <span class="v">52.2297° N 21.0122° E</span></span>
+          <span class="hud-row"><span class="k">UTC</span> <span class="v" id="hudTime">00:00:00</span></span>
+        </div>
+        <div class="hud hud-tr">
+          <span class="hud-row"><span class="k">REC</span> <span class="v">EST. 2010</span></span>
+          <span class="hud-row"><span class="k">CAL</span> <span class="v">.222 REM</span></span>
+          <span class="hud-row"><span class="k">PLATFORM</span> <span class="v">SAKO TRG 22</span></span>
+        </div>
+
+        <svg
+          class="hud-crosshair"
+          viewBox="0 0 220 220"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          style="color: var(--accent);"
+        >
+          <circle cx="110" cy="110" r="80"></circle>
+          <circle cx="110" cy="110" r="40"></circle>
+          <line x1="110" y1="10" x2="110" y2="70"></line>
+          <line x1="110" y1="150" x2="110" y2="210"></line>
+          <line x1="10" y1="110" x2="70" y2="110"></line>
+          <line x1="150" y1="110" x2="210" y2="110"></line>
+          <circle cx="110" cy="110" r="2" fill="currentColor"></circle>
+        </svg>
+
+        <div class="hero-content">
+          <div>
+            {hero.kicker && (
+              <div class="hero-eyebrow reveal" style="--rd:0ms"><span class="dot"></span><span data-pl="hero:kicker">{hero.kicker}</span></div>
+            )}
+            <h1 class="hero-title">
+              {(hero.title ?? []).map((line, i) => {
+                const cls = i === 0 ? 'line1' : 'line2'
+                const delay = `${180 * (i + 1)}ms`
+                return <span class={cls} style={`--rd:${delay}`} data-pl={`hero:title.${i}.text`}>{line.text}</span>
+              })}
+            </h1>
+            {hero.lede && <p class="hero-sub reveal" style="--rd:620ms" data-pl="hero:lede">{hero.lede}</p>}
+          </div>
+        </div>
+
+        <div class="scroll-indicator">
+          <span>Scroll</span>
+          <div class="bar"></div>
+        </div>
+
+        <div class="hud hud-br">
+          <span class="hud-row"><span class="k">FRAME</span> <span class="v" id="hudFrame">000/000</span></span>
+          <span class="hud-row"><span class="k">PROGRESS</span> <span class="v" id="hudProg">0.00%</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== ABOUT ============== -->
+    <section class="about" id="o-mnie" data-screen-label="02 O mnie">
+      <div class="container">
+        <div class="about-grid">
+          <div class="about-media">
+            <video src={videoUrl(about.video) ?? '/videos/documents.mp4'} autoplay muted loop playsinline></video>
+            <span class="media-tag">01 / Archiwum · 2010—2026</span>
+          </div>
+          <div class="about-text">
+            <div class="section-label"><span data-pl="about:kicker">{about.kicker ?? 'O MNIE'}</span></div>
+            <span class="section-num">/ 01</span>
+            <h2 class="display">Mam na imię <em><span data-pl="about:name">{about.name}</span>.</em></h2>
+            {(about.paragraphs ?? []).map((p, i) => (
+              <p class={i === 0 ? 'lede' : ''} data-pl={`about:paragraphs.${i}.body`}>{p.body}</p>
+            ))}
+
+            <div class="about-stats">
+              <div class="stat"><div class="num">16<span style="color:var(--fg-mute)">+</span></div><div class="label">Lat<br />praktyki</div></div>
+              <div class="stat"><div class="num">{trainings.length}</div><div class="label">Zakresów<br />szkoleń</div></div>
+              <div class="stat"><div class="num">1:1</div><div class="label">Trening<br />indywidualny</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FOR WHOM ============== -->
+    <section class="forwhom" id="dla-kogo" data-screen-label="03 Dla kogo">
+      <div class="container">
+        <div class="section-label"><span>Dla kogo</span></div>
+        <span class="section-num">/ 02</span>
+        <h2 class="display">Od pierwszego <em>kontaktu</em> po zaawansowany <em>trening</em>.</h2>
+        <p class="forwhom-sub">Szkolenia skierowane są do cywilów, sportowców, pasjonatów strzelectwa oraz osób zainteresowanych szkoleniami indywidualnymi. Program zawsze dopasowany do umiejętności, celów i tempa nauki — bez schematów i bez presji.</p>
+        <div class="forwhom-chips">
+          <span class="chip">Cywile</span>
+          <span class="chip">Sportowcy</span>
+          <span class="chip">Pasjonaci</span>
+          <span class="chip">Początkujący</span>
+          <span class="chip">Średniozaawansowani</span>
+          <span class="chip">Zaawansowani</span>
+          <span class="chip">Patent strzelecki</span>
+          <span class="chip">1:1 · indywidualnie</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== TRAININGS ============== -->
+    <section class="trainings" id="szkolenia" data-screen-label="04 Szkolenia">
+      <div class="container trainings-intro">
+        <div class="section-label"><span>Zakres szkoleń</span></div>
+        <span class="section-num">/ 03</span>
+        <h2 class="display">{trainings.length} dróg. Jeden <em>proces.</em></h2>
+      </div>
+
+      {trainings.map((t) => {
+        const url = videoUrl(t.video)
+        const isScrub = !!t.scrubVideo
+        const id = t.anchor ?? undefined
+        const titleHtml = withAccent(t.title.replace(t.subtitle ?? '', '').trim(), t.titleAccent)
+        return (
+          <div class="training" data-screen-label={`04.${t.order}`} id={id}>
+            <div class="training-sticky">
+              <div class={isScrub ? 'training-media training-media-scrub' : 'training-media'}>
+                {url && isScrub && (
+                  <video class="scrub-video" data-scrub={`tr-${t.id}`} src={url} muted playsinline preload="auto"></video>
+                )}
+                {url && !isScrub && (
+                  <video src={url} autoplay muted loop playsinline></video>
+                )}
+                {!url && (
+                  /* Fallback: original filenames from videos/ folder by training order */
+                  <video src={['/videos/casings.mp4','/videos/smoke.mp4','/videos/pistol-shots.mp4','/videos/ar15-shots.mp4','/videos/sniper2.mp4'][t.order - 1]} autoplay={!isScrub} muted loop={!isScrub} playsinline class={isScrub ? 'scrub-video' : ''} data-scrub={isScrub ? `tr-${t.id}` : undefined} preload="auto"></video>
+                )}
+              </div>
+              <div class="training-copy">
+                <div class="training-num">{t.numberLabel}</div>
+                <h3 class="training-title">
+                  <Fragment set:html={titleHtml} />
+                  {t.subtitle && <Fragment><br />{t.subtitle}</Fragment>}
+                </h3>
+                <p class="training-desc">{t.description}</p>
+                <div class="training-specs">
+                  {(t.specs ?? []).map((s) => (
+                    <div class="spec"><span class="k">{s.key}</span><span class="v">{s.value}</span></div>
+                  ))}
+                </div>
+                <button class="training-cta" data-training={t.ctaTraining ?? t.title}>{t.ctaLabel ?? 'Zapisz się'} <span class="arrow"></span></button>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </section>
+
+    <!-- ============== WIREFRAME / BALISTYKA ============== -->
+    <section class="wireframe-sec" id="balistyka" data-screen-label="04.6 Balistyka">
+      <div class="wireframe-sticky">
+        <video class="wireframe-video scrub-video" data-scrub="wf" src={videoUrl(wireframe.video) ?? '/videos/wireframe.mp4'} muted playsinline preload="auto"></video>
+        <div class="wireframe-overlay"></div>
+        <div class="wireframe-content">
+          {wireframe.kicker && <div class="section-label"><span>{wireframe.kicker}</span></div>}
+          <h2 class="display wf-title">
+            <Fragment set:html={withAccent(wireframe.title, wireframe.titleAccent)} />
+            {wireframe.subtitle && <Fragment><br /><span data-pl="wireframe:subtitle">{wireframe.subtitle}</span></Fragment>}
+          </h2>
+          {wireframe.description && <p class="wf-sub" data-pl="wireframe:description">{wireframe.description}</p>}
+          <div class="wf-tags">
+            {(wireframe.tags ?? []).map((t, i) => <span data-pl={`wireframe:tags.${i}.label`}>{t.label}</span>)}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== GREEN TACTICS ============== -->
+    <section class="green" id="zielona" data-screen-label="05 Zielona taktyka">
+      <div class="container">
+        <div class="green-grid">
+          <div class="green-text">
+            {green.kicker && <div class="section-label"><span>{green.kicker}</span></div>}
+            {green.sectionNumber && <span class="section-num">{green.sectionNumber}</span>}
+            <h2 class="display">
+              <Fragment set:html={withAccent(green.title, green.titleAccent)} />
+            </h2>
+            {green.description && <p data-pl="green-tactics:description">{green.description}</p>}
+            <div class="green-features">
+              {(green.features ?? []).map((f, i) => (
+                <div class="green-feature">
+                  <div class="t" data-pl={`green-tactics:features.${i}.numberLabel`}>{f.numberLabel}</div>
+                  <div class="d" data-pl={`green-tactics:features.${i}.description`}>{f.description}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div class="green-visual">
+            <video src={videoUrl(green.video) ?? '/videos/sniper-scope.mp4'} autoplay muted loop playsinline></video>
+            <div class="corner c-tl"></div>
+            <div class="corner c-tr"></div>
+            <div class="corner c-bl"></div>
+            <div class="corner c-br"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== PRICING ============== -->
+    <section class="pricing" id="cennik" data-screen-label="05.5 Cennik">
+      <div class="container">
+        <div class="pricing-header">
+          <div class="section-label" style="justify-content:center;"><span>Cennik</span></div>
+          <span class="section-num">/ 05</span>
+          <h2 class="display">Przejrzyste <em>zasady.</em></h2>
+        </div>
+        <div class="pricing-list">
+          {pricing.map((p) => (
+            <div class={p.featured ? 'price-card featured' : 'price-card'}>
+              {p.featured && p.badge && <div class="pc-badge">{p.badge}</div>}
+              <div class="pc-num">{p.numberLabel}</div>
+              <div class="pc-name">
+                <Fragment set:html={withAccent(p.name, p.nameAccent)} />
+              </div>
+              <div class="pc-desc">{p.description}</div>
+              <div class="pc-price">{p.price} <span>PLN</span></div>
+              <div class="pc-unit">{p.unit}</div>
+              <ul class="pc-features">
+                {(p.features ?? []).map((f) => <li>{f.item}</li>)}
+              </ul>
+              <button class="pc-cta" data-training={p.ctaTraining ?? p.name}>{p.ctaLabel ?? 'Umów szkolenie'}</button>
+            </div>
+          ))}
+        </div>
+        <div class="pricing-note">Ceny orientacyjne · program i czas dopasowane indywidualnie · amunicja w cenie</div>
+      </div>
+    </section>
+
+    <!-- ============== PRINCIPLES ============== -->
+    <section class="principles" id="dlaczego" data-screen-label="06 Dlaczego">
+      <div class="container">
+        <div class="principles-header">
+          <div class="section-label"><span>Dlaczego moje szkolenia działają</span></div>
+          <span class="section-num">/ 05</span>
+          <h2 class="display">Proces. Nie <em>sztuczki.</em></h2>
+        </div>
+        <div class="principles-list">
+          {principles.map((p, i) => {
+            const isLast = i === principles.length - 1 && principles.length % 2 === 1
+            const style = isLast ? 'grid-column: span 2;' : undefined
+            return (
+              <div class="principle" style={style}>
+                <div class="pn">{p.numberLabel}</div>
+                <div class="pt">{p.title}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== OPINIONS ============== -->
+    {opinions.length > 0 && (
+      <section class="opinions" id="opinie" data-screen-label="06.5 Opinie">
+        <div class="container">
+          <div class="opinions-header">
+            <div class="section-label"><span>Opinie kursantów</span></div>
+            <span class="section-num">/ 06</span>
+            <h2 class="display">Co mówią <em>kursanci.</em></h2>
+          </div>
+          <div class="opinions-grid">
+            {opinions.map((o, i) => {
+              const rating = o.rating ?? 5
+              return (
+                <article class="opinion-card">
+                  <div class="opinion-rating" data-pl={`opinions.${i}.rating`}>{'★'.repeat(rating) + '☆'.repeat(5 - rating)}</div>
+                  <p class="opinion-quote" data-pl={`opinions.${i}.quote`}>{o.quote}</p>
+                  <div class="opinion-meta">
+                    <span class="opinion-author" data-pl={`opinions.${i}.author`}>{o.author}</span>
+                    {o.training && <span class="opinion-training" data-pl={`opinions.${i}.training`}>{o.training}</span>}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- ============== CTA ============== -->
+    <section class="cta-section" id="kontakt" data-screen-label="07 Kontakt">
+      <video class="cta-video" src="/videos/casings.mp4" autoplay muted loop playsinline></video>
+      <div class="cta-inner">
+        <div class="eyebrow">Umów szkolenie</div>
+        <h2>Trenuj <em>świadomie</em><br />i <em>bezpiecznie.</em></h2>
+        <p>Chcesz przygotować się do egzaminu na patent strzelecki, poprawić wyniki sportowe, albo wejść w strzelectwo na solidnych fundamentach? Skontaktuj się i umów szkolenie dopasowane do Ciebie.</p>
+        <a class="cta-btn" href={`mailto:${contact.email ?? ''}`}>
+          Umów szkolenie
+          <span class="arrow"></span>
+        </a>
+        <div class="cta-contact">
+          {contact.phone && <div><span style="color:var(--fg-mute)">TEL</span> &nbsp; <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} data-pl="contact:phone">{contact.phone}</a></div>}
+          {contact.email && <div><span style="color:var(--fg-mute)">MAIL</span> &nbsp; <a href={`mailto:${contact.email}`} data-pl="contact:email">{contact.email}</a></div>}
+          {(contact.socials ?? []).map((s) => (
+            <div><span style="color:var(--fg-mute)">IG</span> &nbsp; <a href={s.url}>{s.label}</a></div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FOOTER ============== -->
+    <footer>
+      <div class="foot-grid">
+        <div>
+          <img src="/logo.svg" alt={settings.siteName ?? 'SingleShot'} class="foot-brand-logo" />
+          <div class="foot-tag" data-pl="site-settings:tagline">{settings.tagline ?? contact.footerNote ?? ''}</div>
+        </div>
+        <div class="foot-col">
+          <h4>Szkolenia</h4>
+          {trainings.map((t) => <a href="#szkolenia">{t.titleAccent ? t.titleAccent[0].toUpperCase() + t.titleAccent.slice(1) : t.title}</a>)}
+        </div>
+        <div class="foot-col">
+          <h4>Kontakt</h4>
+          {contact.email && <a href={`mailto:${contact.email}`} data-pl="contact:email">{contact.email}</a>}
+          {contact.phone && <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} data-pl="contact:phone">{contact.phone}</a>}
+          {(contact.socials ?? []).map((s) => <a href={s.url}>{s.label}</a>)}
+        </div>
+      </div>
+      <div class="foot-legal">
+        <div>© {new Date().getFullYear()} {settings.siteName ?? 'SingleShot'}</div>
+        <div>ALL RIGHTS RESERVED</div>
+      </div>
+    </footer>
+
+    <!-- ============== CONTACT MODAL ============== -->
+    <div class="modal-overlay" id="contactModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Umów <em>szkolenie</em></h3>
+          <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="contactForm" onsubmit="submitForm(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cf-name">Imię i nazwisko</label>
+                <input type="text" id="cf-name" placeholder="Jan Kowalski" required />
+              </div>
+              <div class="form-group">
+                <label for="cf-phone">Telefon</label>
+                <input type="tel" id="cf-phone" placeholder="+48 000 000 000" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cf-email">E-mail</label>
+              <input type="email" id="cf-email" placeholder="jan@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="cf-training">Rodzaj szkolenia</label>
+              <select id="cf-training">
+                <option value="">— Wybierz szkolenie —</option>
+                {trainings.map((t) => <option value={t.ctaTraining ?? t.title}>{t.title}</option>)}
+                <option value="Zielona taktyka">Zielona taktyka</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cf-message">Wiadomość</label>
+              <textarea id="cf-message" placeholder="Poziom doświadczenia, oczekiwania, preferowana data..."></textarea>
+            </div>
+            <button type="submit" class="modal-submit">Wyślij zapytanie</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="/site.js" is:inline></script>
+    <script src="/live-preview.js" is:inline></script>
+  </body>
+</html>

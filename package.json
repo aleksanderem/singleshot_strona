@@ -1,0 +1,22 @@
+{
+  "name": "singleshot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SingleShot — landing page (Astro) + headless CMS (Payload)",
+  "scripts": {
+    "dev": "concurrently -n CMS,WEB -c yellow,cyan \"cd cms && pnpm dev\" \"cd web && pnpm dev\"",
+    "dev:cms": "cd cms && pnpm dev",
+    "dev:web": "cd web && pnpm dev",
+    "build:cms": "cd cms && pnpm build",
+    "build:web": "cd web && pnpm build",
+    "seed": "cd cms && pnpm seed",
+    "stop": "pkill -f 'next dev' 2>/dev/null; pkill -f 'astro dev' 2>/dev/null; true"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": "^18.20.2 || >=20.9.0",
+    "pnpm": "^9 || ^10"
+  }
+}
