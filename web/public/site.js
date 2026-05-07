@@ -130,7 +130,15 @@
     });
   }
 
-  // Prime the video: play briefly then pause to force buffering + allow seeking
+  // scroll-driven video scrubbing \u2014 flywheel model (momentum + inertia).
+  // These must be initialized BEFORE primeVideo() can fire \u2014 when the hero
+  // video is already cached, readyState >= 2 holds at script-eval time and
+  // primeVideo synchronously calls updateHeroScrub which reads `lastTs`.
+  let lastScrollY = window.scrollY;
+  let lastTs = performance.now();
+  let velocity = 0; // progress units per second, derived from scroll delta
+  let momentum = 0; // decays over time after scroll stops
+
   // Prime the video: ensure metadata loaded, then seek directly
   function primeVideo() {
     heroDuration = heroVideo.duration || 1;
@@ -149,12 +157,6 @@
     // fallback
     setTimeout(() => { if (!videoReady && heroVideo.duration) primeVideo(); }, 1500);
   }
-
-  // scroll-driven video scrubbing \u2014 flywheel model (momentum + inertia)
-  let lastScrollY = window.scrollY;
-  let lastTs = performance.now();
-  let velocity = 0; // progress units per second, derived from scroll delta
-  let momentum = 0; // decays over time after scroll stops
 
   function updateHeroScrub() {
     const rect = hero.getBoundingClientRect();
