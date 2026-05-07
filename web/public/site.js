@@ -421,26 +421,51 @@
     if (e.key === 'Escape' && contactModal.classList.contains('open')) closeModal();
   });
 
-  function submitForm(e) {
-    e.preventDefault();
-    const name = document.getElementById('cf-name').value;
-    const email = document.getElementById('cf-email').value;
-    const phone = document.getElementById('cf-phone').value;
-    const training = cfTraining.value;
-    const message = document.getElementById('cf-message').value;
+  // Where to POST contact-form submissions. Set on <body data-cms-url="..."> in
+  // index.astro from PAYLOAD_URL at build time, falls back to admin subdomain.
+  const cmsUrl = (document.body && document.body.dataset.cmsUrl) || 'https://admin.singleshot.pl';
 
-    // build mailto with form data
-    const subject = encodeURIComponent('Zapytanie o szkolenie: ' + (training || 'Ogólne'));
-    const body = encodeURIComponent(
-      'Imię: ' + name + '\n' +
-      'E-mail: ' + email + '\n' +
-      'Telefon: ' + (phone || '—') + '\n' +
-      'Szkolenie: ' + (training || '—') + '\n\n' +
-      (message || '')
-    );
-    window.location.href = 'mailto:kontakt@singleshot.pl?subject=' + subject + '&body=' + body;
-    closeModal();
-    contactForm.reset();
+  async function submitForm(e) {
+    e.preventDefault();
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    const originalLabel = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Wysyłanie…'; }
+
+    const payload = {
+      name:     document.getElementById('cf-name').value.trim(),
+      email:    document.getElementById('cf-email').value.trim(),
+      phone:    document.getElementById('cf-phone').value.trim() || null,
+      training: cfTraining.value || null,
+      message:  document.getElementById('cf-message').value.trim() || null,
+      sourceUrl: window.location.href,
+      userAgent: navigator.userAgent.slice(0, 200),
+    };
+
+    try {
+      const res = await fetch(cmsUrl + '/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error('HTTP ' + res.status + ' ' + txt.slice(0, 120));
+      }
+      if (submitBtn) submitBtn.textContent = 'Wysłane ✓';
+      contactForm.reset();
+      setTimeout(() => {
+        closeModal();
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel; }
+      }, 1400);
+    } catch (err) {
+      console.error('contact form submit failed', err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Spróbuj ponownie';
+      }
+      alert('Nie udało się wysłać. Spróbuj ponownie albo napisz na ' +
+            (document.body.dataset.fallbackEmail || 'kontakt@singleshot.pl'));
+    }
   }
 
   // also wire up the main CTA button

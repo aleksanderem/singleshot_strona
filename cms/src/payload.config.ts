@@ -14,6 +14,7 @@ import { Trainings } from './collections/Trainings'
 import { PricingCards } from './collections/PricingCards'
 import { Principles } from './collections/Principles'
 import { Opinions } from './collections/Opinions'
+import { Messages } from './collections/Messages'
 
 import { Hero } from './globals/Hero'
 import { About } from './globals/About'
@@ -101,7 +102,7 @@ export default buildConfig({
   serverURL: SERVER_URL,
   cors: [FRONTEND_URL, SERVER_URL],
   csrf: [FRONTEND_URL, SERVER_URL],
-  collections: [Users, Media, Trainings, PricingCards, Principles, Opinions],
+  collections: [Users, Media, Trainings, PricingCards, Principles, Opinions, Messages],
   globals: [Hero, About, Wireframe, GreenTactics, Contact, SiteSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-trigger:
+    name: Verify build and trigger production rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: |
+            cms/pnpm-lock.yaml
+            web/pnpm-lock.yaml
+
+      - name: Install CMS dependencies
+        working-directory: cms
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check CMS
+        working-directory: cms
+        run: pnpm payload generate:types
+        env:
+          DATABASE_URI: postgres://nobody:nopass@localhost:5432/nodb
+          PAYLOAD_SECRET: ci-placeholder-secret
+
+      - name: Install web dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Astro (sanity)
+        working-directory: web
+        run: pnpm build
+        env:
+          PAYLOAD_URL: ${{ secrets.PAYLOAD_URL }}
+
+      - name: Trigger production rebuild
+        if: github.event_name != 'pull_request'
+        env:
+          WEBHOOK_URL: ${{ secrets.REBUILD_WEBHOOK_URL }}
+          REBUILD_TOKEN: ${{ secrets.REBUILD_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          payload=$(printf '{"source":"github-actions","sha":"%s"}' "$COMMIT_SHA")
+          response=$(curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $REBUILD_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$payload")
+          echo "rebuild ack: $response"
